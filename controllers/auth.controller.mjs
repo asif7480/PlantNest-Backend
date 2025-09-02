@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import asyncHandler from "express-async-handler";
 import User from "../models/user.model.mjs";
+import generateToken from "../utils/generateToken.mjs";
 
 const register = asyncHandler( async(request, response) => {
     const {username, email, password, role, age, city, avatar} = request.body
@@ -24,9 +25,75 @@ const register = asyncHandler( async(request, response) => {
 })
 
 const login = asyncHandler( async(request, response) => {
+    const { email, password } = request.body
 
+    if(!email || !password){
+        return response.status(400).json({
+            message: "Input all fields",
+            success: false
+        })
+    }
+
+    const user = await User.findOne({ email })
+    if(!user){
+        return response.status(401).json({
+            message: "User not registered.",
+            success: false
+        })
+    }
+
+    const matchPassword = await bcrypt.compare(password, user.password)
+
+    if(!matchPassword){
+        return response.status(401).json({
+            message: "Invalid password",
+            success: false
+        })
+    }
+
+    const token = generateToken(user._id)
+    
+    response.cookie("token", token, {
+        maxAge: 6*60*60*1000,
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax"
+    })
+
+    response.status(200).json({
+        message: "User login successfully",
+        success: true,
+        username: user.username,
+        email: user.email,
+        token
+    })
+})
+
+const logout = asyncHandler( async(request, response) => {
+    response.clearCookie("token", {
+        httpOnly: true,
+        secure: false,
+        // secure: true, // for production
+        sameSite: "lax",
+        // sameSite: "none" // for production
+    })
+
+    response.status(200).json({
+        message: "logout successfully.",
+        success: true
+    })
+})
+
+
+const profile = asyncHandler( async(request, response) => {
+    const user = await User.findById(request.user._id).select("-password")
+
+    response.status(200).json(user)
 })
 
 export {
-    register
+    register,
+    login,
+    profile,
+    logout
 }
