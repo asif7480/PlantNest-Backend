@@ -4,8 +4,10 @@ const categorySchema = mongoose.Schema(
     {
         category: { 
             type: String, 
-            required: true, 
-            enum: ["flowering", "non-flowering", "indoor", "outdoor", "succulents", "medicinal"]
+            required: true,
+            enum: ["flowering", "non-flowering", "indoor", "outdoor", "succulents", "medicinal"],
+            lowercase: true,
+            trim: true
         }
     },
     { timestamps: true }
