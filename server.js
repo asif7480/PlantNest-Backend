@@ -21,6 +21,7 @@ app.use(`/api/v1/category`, categoryRouter)
 app.use(`/api/v1/plant`, plantRouter)
 
 
+// // for uploading a single file
 // app.post('/upload', upload.single("file"), async function(request, response){
 //     console.log(request.file);
 
@@ -32,6 +33,26 @@ app.use(`/api/v1/plant`, plantRouter)
 //         message: "File uploaded."
 //     })
 // })
+
+// for uploading multiple file
+app.post('/upload', upload.array("file", 4), async function(request, response){
+    console.log(request.files);
+
+    const uploadedFiles = []
+
+    for(const file of request.files){
+        const uploadedOnCloudinary = await uploadFileOnCloudinary(file.path)
+        uploadedFiles.push({
+            url: uploadedOnCloudinary.url
+        })
+    }
+
+    console.log(uploadedFiles);
+    
+    response.status(201).json({
+        message: "File uploaded."
+    })
+})
 
 app.use(errorHandler)
 connectDB()
